@@ -1,23 +1,32 @@
 # The decision core of the bot
 from leverage_gauge import LeverageGauge
+from flow_guardian import FlowGuardian
 
 class Synthesizer:
     def __init__(self, client):
         self.leverage_gauge = LeverageGauge(client)
+        self.flow_guardian = FlowGuardian(client)
         # We will add other modules here later
 
     def get_trading_signal(self, symbol: str) -> dict:
         """
-        Generates a trading signal based on the analysis of the leverage gauge module.
+        Generates a trading signal based on the analysis of the leverage gauge and flow guardian modules.
         """
         market_temp = self.leverage_gauge.analyze_market_temperature(symbol)
+        spot_flow = self.flow_guardian.analyze_spot_flow(symbol)
 
         signal = "NEUTRAL"
         reason = "Neutral market conditions"
 
-        if market_temp["conclusion"] == "Overheated - High risk of a long squeeze":
+        if market_temp["conclusion"] == "Overheated - High risk of a long squeeze" and spot_flow["conclusion"] == "Whales are selling":
             signal = "STRONG SELL"
-            reason = "Market is Overheated - High risk of a long squeeze"
+            reason = "Market is Overheated and Whales are selling"
+        elif market_temp["conclusion"] == "Overheated - High risk of a long squeeze":
+            signal = "SELL"
+            reason = "Market is Overheated"
+        elif spot_flow["conclusion"] == "Whales are selling":
+            signal = "SELL"
+            reason = "Whales are selling"
         elif market_temp["conclusion"] == "Bearish":
             signal = "SELL"
             reason = "Market is Bearish"
@@ -26,8 +35,7 @@ class Synthesizer:
             "signal": signal,
             "reason": reason,
             "source_data": {
-                "funding_rate": market_temp["funding_rate"],
-                "long_short_ratio": market_temp["long_short_ratio"],
-                "open_interest": market_temp["open_interest"]
+                "leverage_gauge": market_temp,
+                "flow_guardian": spot_flow
             }
         }
