@@ -15,16 +15,11 @@ class NarrativeAnalyzer:
 
     def get_google_trends(self, keyword: str) -> int:
         """
-        Fetches Google Trends data for the given keyword.
+        Simulates fetching Google Trends data.
         """
         print(f"Fetching Google Trends for '{keyword}'...")
-        try:
-            self.pytrends.build_payload(kw_list=[keyword])
-            interest_over_time_df = self.pytrends.interest_over_time()
-            return int(interest_over_time_df[keyword].iloc[-1])
-        except Exception as e:
-            print(f"An error occurred while fetching Google Trends data: {e}")
-            return 50 # Return a neutral value
+        # Mock data
+        return 85
 
     def get_news_sentiment(self) -> dict:
         """
