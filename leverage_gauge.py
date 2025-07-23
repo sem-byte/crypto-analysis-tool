@@ -122,24 +122,18 @@ class LeverageGauge:
             print(f"An error occurred: {e}")
             return []
 
-    def analyze_market_temperature(self, symbol: str) -> dict:
+    def analyze_market_temperature(self, symbol: str) -> int:
         """
-        Analyzes the market temperature by fetching and analyzing various metrics.
+        Analyzes the market temperature and returns a score from -10 to +10.
         """
         funding_rate = self.get_funding_rate(symbol)
-        long_short_ratio = self.get_long_short_ratio(symbol)
-        open_interest = self.get_open_interest(symbol)
 
-        conclusion = "Neutral"
-        if funding_rate is not None and long_short_ratio is not None:
-            if funding_rate > 0.0002 and long_short_ratio > 1.5:
-                conclusion = "Overheated - High risk of a long squeeze"
+        score = 0
+        if funding_rate is not None:
+            if funding_rate > 0.0005:
+                score = -8
+            elif funding_rate > 0:
+                score = -3
             elif funding_rate < 0:
-                conclusion = "Bearish"
-
-        return {
-            "funding_rate": funding_rate,
-            "long_short_ratio": long_short_ratio,
-            "open_interest": open_interest,
-            "conclusion": conclusion
-        }
+                score = 5
+        return score

@@ -42,21 +42,45 @@ class FlowGuardian:
             'small_sells': 0.15,
         }
 
-    def analyze_spot_flow(self, symbol: str) -> dict:
+    def get_ticker_info(self, symbol: str) -> dict:
         """
-        Analyzes the spot market flow by fetching and analyzing various metrics.
+        Fetches the ticker information for the given symbol.
         """
-        taker_volume = self.get_taker_volume_distribution(symbol)
+        print(f"Fetching Ticker Info for {symbol}...")
+        try:
+            url = "https://api.bybit.com/v5/market/tickers"
+            params = {
+                "category": "linear",
+                "symbol": symbol,
+            }
 
-        large_order_imbalance = taker_volume['large_sells'] - taker_volume['large_buys']
+            response = self.session.get(url, params=params, proxies=self.proxies)
+            data = response.json()
 
-        conclusion = "Neutral flow"
-        if large_order_imbalance > 0.05:
-            conclusion = "Whales are selling"
-        elif large_order_imbalance < -0.05:
-            conclusion = "Whales are buying"
+            if data and data['retCode'] == 0:
+                return data['result']['list'][0]
+            else:
+                print(f"Error fetching Ticker Info: {data}")
+                return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
 
-        return {
-            "large_order_imbalance": large_order_imbalance,
-            "conclusion": conclusion
-        }
+    def analyze_spot_flow(self, symbol: str) -> int:
+        """
+        Analyzes the spot market flow and returns a score from -10 to +10.
+        """
+        ticker_info = self.get_ticker_info(symbol)
+
+        score = 0
+        if ticker_info:
+            price_24h_change = float(ticker_info['price24hPcnt'])
+            if price_24h_change < -0.05:
+                score = -9
+            elif price_24h_change < 0:
+                score = -2
+            elif price_24h_change > 0.05:
+                score = 9
+            elif price_24h_change > 0:
+                score = 2
+        return score

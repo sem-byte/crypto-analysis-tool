@@ -1,0 +1,5 @@
+pybit
+pytrends
+requests
+pandas
+pandas-ta

@@ -52,20 +52,43 @@ class PsychologicalScanner:
                 patterns.append('BEARISH_3INSIDE')
         return patterns
 
-    def analyze_chart_psychology(self, symbol: str) -> dict:
+    def get_atr(self, ohlcv_df: pd.DataFrame) -> float:
         """
-        Analyzes the chart psychology by fetching historical data and detecting patterns.
+        Calculates the ATR (Average True Range) value from historical data.
+        """
+        if ohlcv_df.empty:
+            return 0.0
+
+        atr = ohlcv_df.ta.atr()
+        return atr.iloc[-1]
+
+    def get_market_regime(self, symbol: str) -> str:
+        """
+        Determines the market regime (Bullish/Bearish) based on the 200-period EMA.
+        """
+        ohlcv_df = self.get_historical_data(symbol, interval="240", limit=200) # 4-hour data
+        if ohlcv_df.empty:
+            return "Neutral"
+
+        ema = ohlcv_df.ta.ema(length=200)
+        last_close = ohlcv_df['close'].iloc[-1]
+
+        if last_close > ema.iloc[-1]:
+            return "Bullish"
+        else:
+            return "Bearish"
+
+    def analyze_chart_psychology(self, symbol: str) -> int:
+        """
+        Analyzes the chart psychology and returns a score from -10 to +10.
         """
         ohlcv_df = self.get_historical_data(symbol)
         detected_patterns = self.detect_patterns(ohlcv_df)
 
-        conclusion = "Neutral"
+        score = 0
         if any("BULLISH" in p for p in detected_patterns):
-            conclusion = "Retail sentiment is likely Bullish"
+            score = -6
         elif any("BEARISH" in p for p in detected_patterns):
-            conclusion = "Retail sentiment is likely Bearish"
+            score = 6
 
-        return {
-            "detected_patterns": detected_patterns,
-            "conclusion": conclusion
-        }
+        return score
