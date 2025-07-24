@@ -5,10 +5,14 @@ class PsychologicalScanner:
     def __init__(self, session):
         self.session = session
 
-    def get_historical_data(self, symbol: str, interval: str = "60", limit: int = 200) -> pd.DataFrame:
+    def get_historical_data(self, symbol: str, interval: str = "60", limit: int = 200, ohlcv_df: pd.DataFrame = None) -> pd.DataFrame:
         """
         Fetches historical kline (candlestick) data for the given symbol.
+        If ohlcv_df is provided, it will be used instead of fetching new data.
         """
+        if ohlcv_df is not None:
+            return ohlcv_df
+
         print(f"Fetching historical data for {symbol}...")
         try:
             # Note: This is a placeholder for the actual API call.
